@@ -1,0 +1,4 @@
+interface:
+  display_name: "LaTeX to Word with Zotero"
+  short_description: "Build polished Word with live Zotero citations"
+  default_prompt: "Use $latex-to-word-workflow to convert my LaTeX manuscript into polished Word with Zotero-refreshable citations and validated formatting."

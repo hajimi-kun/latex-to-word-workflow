@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+*.bak
+~$*.docx
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
