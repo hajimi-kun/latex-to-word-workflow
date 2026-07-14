@@ -1,98 +1,89 @@
 # First-run setup
 
-Use this guide only when the LaTeX-to-Word environment has not been verified. Complete the steps in order and do not use a full manuscript as the first test.
+Use only when the environment has not been verified. Do not use a full manuscript as the first test.
 
-## 1. Explain the output choices
+## 1. Output modes
 
-Tell the user in plain language:
+- **Zotero live:** citations stay as Zotero fields (refresh, restyle, bibliography in Word). Prefer when authors keep editing Word.
+- **Static CSL:** plain formatted text. Prefer for previews, fixed deliverables, or no Zotero/BBT.
 
-- **Zotero live:** citations remain Zotero fields in Word. The author can refresh them, change the citation style, and generate or update the bibliography. Recommend this mode when the Word file will continue to be edited.
-- **Static CSL:** citations and references are ordinary formatted text. Use it for previews, fixed deliverables, or systems without Zotero and Better BibTeX.
+Ask which mode is needed only if unclear. Live mode needs more first-time setup.
 
-Ask which mode is needed only if the intended output is unclear. Zotero live requires more first-time setup.
+## 2. Detect environment
 
-## 2. Detect the environment
+Check before proposing installs:
 
-Check before proposing installation:
+| Component | How to think about it |
+|---|---|
+| Pandoc 3+ | `pandoc -v` |
+| Python + deps | `pip install -r requirements.txt` (`python-docx`, `lxml`) |
+| LaTeX/BibTeX | Prefer `latexmk` available |
+| Microsoft Word | Installed and usable by the **user** (agent does not drive Word UI) |
+| Live only | Zotero desktop, Word add-in (**user** confirms Zotero tab), Better BibTeX, current official `zotero.lua` |
 
-- Pandoc 3 or newer.
-- Python and the `python-docx` package.
-- A working LaTeX/BibTeX toolchain, preferably with `latexmk`.
-- Microsoft Word on Windows.
-- For Zotero live: Zotero desktop, the Zotero Word add-in, Better BibTeX, and a current official `zotero.lua`.
+Report installed / missing / needs user confirmation. Do not claim the Word add-in works only because files exist—ask the user whether the **Zotero** tab appears. Install software only after user confirmation.
 
-Report the result as installed, missing, or requiring user verification. Do not claim that a Word add-in works merely because its files exist; ask the user to confirm that the **Zotero** tab appears in Word when automation cannot verify the interface. Obtain confirmation before installing software or plugins.
-
-Download the official Better BibTeX filter only from:
+Official filter only:
 
 `https://retorque.re/zotero-better-bibtex/exporting/zotero.lua`
 
-## 3. Verify Zotero and Better BibTeX
+## 3. Zotero + Better BibTeX (live mode)
 
-For Zotero-live mode:
+1. Start Zotero; ensure Better BibTeX is enabled.
+2. Confirm Word shows the Zotero tab (reinstall add-in from Zotero Cite settings if missing; restart Word).
+3. If localhost API calls fail under a system proxy, set `NO_PROXY=*` / `no_proxy=*` for that shell only.
+4. Smoke the API with a **real** library item (never invent keys):
 
-1. Start Zotero and confirm that Better BibTeX is enabled.
-2. Confirm that Word shows the Zotero tab. If absent, use Zotero's Cite settings to reinstall the Microsoft Word add-in, then restart Word.
-3. Bypass proxies for localhost during API checks:
-
-```powershell
-$env:NO_PROXY = "*"
-$env:no_proxy = "*"
-```
-
-4. Test the Better BibTeX API and one real library item:
-
-```powershell
+```text
 python scripts/test_better_bibtex.py "realCitationKeyOrTitle"
 ```
 
-Use a real item from the user's Zotero library. Verify its Better BibTeX citation key by title or DOI; never invent or guess a key. A response from `http://127.0.0.1:23119/better-bibtex/json-rpc` confirms the local integration. A 404 usually means Better BibTeX is missing or disabled.
+A response from `http://127.0.0.1:23119/better-bibtex/json-rpc` means BBT is reachable. HTTP 404 usually means BBT missing/disabled.
 
-## 4. Prepare the Word reference template
+## 4. Word reference template
 
-If the project has no approved template, copy `assets/reference.docx` into the project under a clear project-specific name. Do not edit the bundled asset as the user's working template.
+If the project has no approved template, **copy** `assets/reference.docx` to a project path. Do not treat the bundled file as the working template.
 
-Ask the user to open the copied template and inspect its visible samples. Explain that the template controls the base appearance of future DOCX files. Have the user review and save at least:
+Ask the user to open the copy and accept (or edit) at least: page size/margins; Title/Subtitle/Heading 1–3; Normal/Body Text; Figure (no first-line indent); Caption; Table Body; Bibliography hanging indent.
 
-- page size and margins;
-- `Title`, `Subtitle`, and `Heading 1/2/3`;
-- `Normal` and `Body Text`;
-- `Figure` with no first-line indent;
-- `Caption`;
-- `Table Body`;
-- `Bibliography` with the desired hanging indent.
+Defaults are **A4 + Times New Roman**. US Letter or CJK body fonts need a project-specific template.
 
-Explain that Zotero's CSL style controls citation punctuation and reference content, while the Word template controls page layout and paragraph appearance. Continue only after the user accepts the template or explicitly asks to use the bundled defaults.
+Zotero CSL controls citation punctuation and reference **content**; the Word template controls page layout and paragraph look. Continue only after the user accepts the template or explicitly accepts bundled defaults.
 
-## 5. Run a one-citation smoke test
+## 5. One-citation smoke test
 
-Use `examples/minimal/` or an equivalent minimal LaTeX file. Replace `exampleCitation2025` with one real Better BibTeX key and ensure the matching entry is present in the test `.bib` file.
+Use `examples/minimal/` or equivalent. For live mode, replace `exampleCitation2025` with a real BBT key and matching `.bib` entry.
 
-Build the requested mode with the approved Word template. For Zotero live, use `zotero.lua` without `--citeproc`. Keep the test output separate from the manuscript output.
+Build the requested mode with the approved template. Live: `zotero.lua` without `--citeproc`. Keep test outputs separate from manuscript outputs.
 
-## 6. Validate the test in Word
+Example (paths relative to the skill root; adjust as needed):
 
-Do not proceed to the full manuscript until all applicable checks pass:
+```text
+# Static — provide any journal CSL (e.g. from https://github.com/citation-style-language/styles)
+pandoc examples/minimal/main.tex -f latex -t docx --wrap=none --citeproc --bibliography=examples/minimal/references.bib --csl=path/to/journal.csl --reference-doc=assets/reference.docx -o examples/minimal/output/minimal_static.docx
 
-1. LaTeX compiles without an undefined citation.
-2. The DOCX opens through Word `Documents.OpenNoRepairDialog` without a repair warning.
-3. The expected native `ADDIN ZOTERO_ITEM CSL_CITATION` field exists in Zotero-live mode.
-4. In Word, Zotero `Refresh` succeeds.
-5. `Document Preferences` can change the citation style.
-6. `Add/Edit Bibliography` generates the bibliography from the test citation.
-7. The body, figure, caption, table, and bibliography styles look acceptable.
-
-Use the bundled validators where applicable:
-
-```powershell
-python scripts/validate_docx.py test.docx --expect-zotero 1
-powershell -File scripts/validate_with_word.ps1 -Path test.docx
+python scripts/format_generated_docx.py examples/minimal/output/minimal_static.docx
+python scripts/promote_native_crossrefs.py examples/minimal/output/minimal_static.docx examples/minimal/output/minimal_static_native.docx --tex examples/minimal/main.tex
+python scripts/check_cross_references.py --tex examples/minimal/main.tex --docx examples/minimal/output/minimal_static_native.docx --require-native-word-fields
+python scripts/validate_docx.py examples/minimal/output/minimal_static_native.docx --tex examples/minimal/main.tex
 ```
 
-If a check fails, fix and repeat the minimal test. Do not diagnose setup failures through a full manuscript build.
+If the user asks for a Windows COM open check: `powershell -File scripts/validate_with_word.ps1 -Path examples/minimal/output/minimal_static_native.docx`.
 
-## 7. Hand off to routine use
+Or use `examples/minimal/build.ps1` with `-Csl` / `-ZoteroLua` (ZoteroLive asserts `--expect-zotero 1`).
 
-After the smoke test passes, record the paths to the approved `reference.docx` and `zotero.lua` in the project's build script or configuration. Then use the routine workflow:
+## 6. Split validation (agent vs user)
 
-`audit citation keys → compile LaTeX → build DOCX → map Word styles → validate → refresh citations and add the bibliography in Word`
+**Agent (scripts by default):** LaTeX clean; `validate_docx.py --tex ...` (enforces table/image counts; live mode also `--expect-zotero N`); `check_cross_references.py --require-native-word-fields` (including native REF target bookmarks). Do **not** automate Zotero clicks.
+
+**Word COM (optional):** mention `scripts/validate_with_word.ps1` as a Windows open-without-repair probe. Run it only if the **user asks** and desktop Word is available.
+
+**User (in Word):** open without repair; live mode: Document Preferences (set style) **OK before** bulk Refresh, then Add/Edit Bibliography; Select All → F9; visual styles and PDF spot-check. If the first live open claims corruption, rebuild the DOCX once (known intermittent issue).
+
+Do not proceed to the full manuscript until the **user** accepts the smoke-test DOCX. If scripts fail, fix and rebuild the minimal test; if Word looks wrong, fix build inputs/template and rebuild—still let the user re-check.
+
+## 7. Hand off
+
+Record approved `reference.docx` and `zotero.lua` paths in the project build script/config. Routine:
+
+`audit keys → compile LaTeX → Pandoc → format styles → promote native cross-refs → script checks → user Word acceptance`

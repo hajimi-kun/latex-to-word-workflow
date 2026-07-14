@@ -1,67 +1,96 @@
 # LaTeX to Word Workflow
 
-An Agent Skill for converting LaTeX manuscripts into polished, editable Microsoft Word documents. It supports figures, equations, tables, custom Word styles, static CSL references, and native Zotero citation fields that remain refreshable in Word.
+Agent Skill: convert LaTeX manuscripts into polished, editable Microsoft Word (DOCX) with figures, equations, tables, custom styles, static CSL references, and optional live Zotero citation fields.
+
+Current version: **2.0.0**
 
 ## Highlights
 
-- Convert LaTeX directly to DOCX with Pandoc.
-- Use a reusable `reference.docx` to control Word formatting.
-- Preserve live Zotero citations through Better BibTeX's official `zotero.lua` filter.
-- Audit citation keys across LaTeX, BibTeX, and Zotero.
-- Assign dedicated Word styles to figures, captions, tables, and bibliographies.
-- Validate DOCX relationships and verify that Microsoft Word opens the result without repair.
-- Guide first-time users through template preparation and a one-citation smoke test.
+- Pandoc LaTeX → DOCX with a reusable `reference.docx`
+- Live Zotero via Better BibTeX’s official `zotero.lua`, or static CSL without Zotero
+- Citation-key audit (BibTeX ± Better BibTeX)
+- Native Word `SEQ`/`REF` for figures, tables, and labeled equations, with cross-ref audit
+- Style mapping for figures, captions, tables, bibliographies
+- DOCX relationship / cross-ref package checks; final Word refresh and visual check by the user
 
-## Repository layout
+## Layout
 
-The installable skill is in [`latex-to-word-workflow/`](latex-to-word-workflow/). The repository-level files are only for distribution and licensing.
+Installable skill: [`latex-to-word-workflow/`](latex-to-word-workflow/). Repo root holds distribution files only.
 
-## Installation
+## Install
 
-Copy or clone the `latex-to-word-workflow` directory into the skills directory used by your Agent Skills-compatible tool.
+Copy or clone the inner `latex-to-word-workflow` folder into your Agent Skills directory.
 
-For Codex on Windows, a typical destination is:
+Examples:
 
-```text
-%USERPROFILE%\.codex\skills\latex-to-word-workflow
-```
-
-Example with Git:
+| Tool | Typical path |
+|---|---|
+| Codex (Windows) | `%USERPROFILE%\.codex\skills\latex-to-word-workflow` |
+| Claude Code | `~/.claude/skills/latex-to-word-workflow` |
+| Other | Any skills root that loads a folder with `SKILL.md` |
 
 ```powershell
 git clone https://github.com/hajimi-kun/latex-to-word-workflow.git
 Copy-Item -Recurse .\latex-to-word-workflow\latex-to-word-workflow "$env:USERPROFILE\.codex\skills\"
 ```
 
-Other Agent Skills-compatible tools can use the same skill folder and its standard `SKILL.md` entry. The optional `agents/openai.yaml` supplies OpenAI-specific interface metadata and may be ignored elsewhere.
+```bash
+git clone https://github.com/hajimi-kun/latex-to-word-workflow.git
+cp -R latex-to-word-workflow/latex-to-word-workflow ~/.claude/skills/
+```
+
+Optional `agents/openai.yaml` is OpenAI/Codex UI metadata; other hosts may ignore it.
+
+Python deps (from the skill directory):
+
+```text
+pip install -r requirements.txt
+```
 
 ## First use
 
-Ask your agent to use the skill for a LaTeX-to-Word conversion. On an unconfigured computer, the skill instructs the agent to:
+Ask the agent to convert with this skill. On an unconfigured machine it should:
 
-1. detect Pandoc, Python, LaTeX, Word, Zotero, and Better BibTeX;
-2. prepare and confirm a project-specific Word template;
-3. verify one real Better BibTeX citation key;
-4. generate a one-citation test document;
-5. confirm that Word and Zotero can refresh the citation and create the bibliography; and
-6. convert the full manuscript only after the test passes.
+1. Detect Pandoc, Python, LaTeX, Word, and (if needed) Zotero/BBT
+2. Copy/confirm a project Word template
+3. Smoke-test with `examples/minimal/` (one real BBT key for live mode)
+4. Only then convert the full manuscript
 
-See [`SKILL.zh-CN.md`](latex-to-word-workflow/SKILL.zh-CN.md) for the Chinese-readable skill guide.
+Details: [`references/first-run-setup.md`](latex-to-word-workflow/references/first-run-setup.md).
+Chinese guide: [`SKILL.zh-CN.md`](latex-to-word-workflow/SKILL.zh-CN.md).
 
-## Main requirements
+## Requirements
 
 - Pandoc 3+
-- Python with `python-docx`
-- LaTeX/BibTeX toolchain
-- Microsoft Word on Windows
-- Zotero, the Zotero Word plugin, Better BibTeX, and the official `zotero.lua` filter for live citations
+- Python with `python-docx` and `lxml` (`requirements.txt`)
+- LaTeX/BibTeX
+- Desktop Word for the **user** to open, update fields, and (if live) refresh Zotero
+- For live citations: Zotero, Word plugin, Better BibTeX, official `zotero.lua`
+- Optional: `scripts/validate_with_word.ps1` (Windows COM) — agent may offer it and run it **only if the user asks**
 
-Static CSL conversion can be used without Zotero and Better BibTeX.
+Static CSL works without Zotero/BBT.
+
+## Related projects
+
+Not dependencies — useful context when extending this skill. Summary: [`latex-to-word-workflow/references/ecosystem-notes.md`](latex-to-word-workflow/references/ecosystem-notes.md).
+
+| Project | Overlap |
+|---|---|
+| [adamsconchallos/tex2docx](https://github.com/adamsconchallos/tex2docx) | Flatten + fidelity counts + PDF figure handling |
+| [jay-dennis/tex2docx](https://github.com/jay-dennis/tex2docx) | TeX prep, label prefixes, pandoc-xnos era workflow |
+| [tianbaiting/tex2doc](https://github.com/tianbaiting/tex2doc) | PDF image conversion for Word |
+| [scavero/tex2docx](https://github.com/scavero/tex2docx) | TikZ/cover rasterization, reference-doc |
+| [xhan97/Latex2WordExample](https://github.com/xhan97/Latex2WordExample) | pandoc-crossref + citeproc example |
+| [lierdakil/pandoc-crossref](https://github.com/lierdakil/pandoc-crossref) | Filter-based cross-refs (static; different from SEQ/REF promote) |
+| [retorquere/zotero-better-bibtex](https://github.com/retorquere/zotero-better-bibtex) | Official `zotero.lua` live fields |
+| [jyluo1994/zotero-word-citation](https://github.com/jyluo1994/zotero-word-citation) | Agent skill for Zotero→Word citation routes |
+
+This repo’s niche: **agent skill** + live **or** static cites + **native Word SEQ/REF** + package audits + **user** Word acceptance.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
 
-## 社区
+## Community
 
-- [LINUX DO 社区](https://linux.do/)
+- [LINUX DO](https://linux.do/)

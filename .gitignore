@@ -8,3 +8,5 @@ __pycache__/
 Thumbs.db
 .idea/
 .vscode/
+examples/**/output/
+latex-to-word-workflow/examples/**/output/

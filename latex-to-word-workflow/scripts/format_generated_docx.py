@@ -9,6 +9,16 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Cm, Pt
 
+# English + common Chinese bibliography section titles
+REFERENCE_HEADINGS = frozenset({
+    "references",
+    "bibliography",
+    "works cited",
+    "参考文献",
+    "引用文献",
+    "参考资料",
+})
+
 
 def ensure_style(doc: Document, name: str, base: str = "Normal"):
     if name in doc.styles:
@@ -20,6 +30,11 @@ def ensure_style(doc: Document, name: str, base: str = "Normal"):
 
 def image_only(paragraph) -> bool:
     return bool(paragraph._p.xpath(".//w:drawing | .//w:pict")) and not paragraph.text.strip()
+
+
+def is_reference_heading(text: str) -> bool:
+    normalized = re.sub(r"\s+", " ", text).strip().rstrip(":：").lower()
+    return normalized in REFERENCE_HEADINGS or text.strip().rstrip(":：") in REFERENCE_HEADINGS
 
 
 def main() -> None:
@@ -47,7 +62,7 @@ def main() -> None:
     in_references = False
     for paragraph in doc.paragraphs:
         text = paragraph.text.strip()
-        if text.lower() in {"references", "bibliography"}:
+        if is_reference_heading(text):
             in_references = True
             previous_was_image = False
             continue
