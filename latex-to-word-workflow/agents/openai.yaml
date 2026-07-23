@@ -1,4 +1,4 @@
 interface:
-  display_name: "LaTeX to Word with Zotero"
-  short_description: "Build polished Word with live Zotero citations"
-  default_prompt: "Use $latex-to-word-workflow to convert my LaTeX manuscript into polished Word with Zotero-refreshable citations and validated formatting."
+  display_name: "LaTeX to Word Workflow"
+  short_description: "Build submission-grade academic Word candidates"
+  default_prompt: "Use $latex-to-word-workflow to produce a submission-grade Word candidate from my complete LaTeX project, generate Zotero-live fields and native Word cross-references, complete agent-side audits, and prepare the user-run Word/Zotero validation handoff."

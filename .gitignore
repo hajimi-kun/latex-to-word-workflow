@@ -10,3 +10,11 @@ Thumbs.db
 .vscode/
 examples/**/output/
 latex-to-word-workflow/examples/**/output/
+
+# Local-only workflow material belongs in the sibling
+# D:/Research/latex-to-word-workflow-local/ workspace.
+/latex-to-word-workflow-backups/
+/latex-to-word-workflow-zh_CN/
+/suggestions-from-other-agent/
+/.local/
+/artifacts/

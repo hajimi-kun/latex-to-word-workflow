@@ -1,134 +1,162 @@
 ---
 name: latex-to-word-workflow
-description: This skill should be used when converting a LaTeX manuscript to polished editable DOCX (figures, equations, tables, native Word SEQ/REF cross-references, custom styles, static CSL or live Zotero citations), or when the user asks for Pandoc DOCX builds, Better BibTeX/zotero.lua integration, reference-doc templates, or DOCX validation.
-version: 2.0.0
+description: >
+  Load when the user asks to convert an academic LaTeX manuscript, thesis, or
+  report into an editable Word DOCX, adapt it to a Word template, preserve
+  citations or cross-references, or diagnose a LaTeX-to-Word conversion
+  problem. Do not use for PDF-only LaTeX compilation, general Word editing,
+  or DOCX-to-LaTeX conversion.
+version: 3.0.0
 ---
 
-# LaTeX → Word (Zotero optional)
+# LaTeX to Word
 
-## Resources
+Produce a submission-grade Word candidate from a complete LaTeX project. The
+candidate must preserve scientific meaning, use the confirmed target semantics,
+remain editable where practical, and include an explicit status for the user-run
+Word/Zotero acceptance steps.
 
-| Path | Role |
+## Non-negotiable defaults
+
+- Preserve the original LaTeX, bibliography, figures, and authoritative Word
+  target. Work only on generated files or explicit copies.
+- Use Pandoc as the initial editable-structure converter. Add source annotations,
+  Lua, OpenXML, or supported-adapter Word automation only for an observed bridge
+  mismatch.
+- For a new project, initialize `examples/bridge-starter/` into the generated
+  build directory. Reuse `docx_bridge.py` for fields, bookmarks, styles, and
+  DOCX packaging; adapt configuration or `project_adapter.py` instead of
+  reimplementing those primitives.
+- For every new or changed target, distill the required roles (not unrelated
+  template styles) and pass a representative probe before full conversion.
+- Treat object packaging and layout as target-owned contract values. Paragraphs,
+  tab stops, borderless tables, caption segment sequences, label literals, and
+  object order are possible representations, not generic skill defaults.
+- When citations exist, Zotero-live fields are mandatory. Run the fixed
+  Zotero-live setup and probe in
+  `references/conversion-playbook.md#zotero-live-citations`; repair agent-side
+  configuration where possible and give the user exact manual steps for the
+  remaining Word/Zotero setup.
+- Convert every LaTeX cross-reference occurrence to a verified native Word field
+  by default. Static references require an informed, recorded user opt-out.
+- Treat desktop Microsoft Word as the authoritative environment for fields,
+  numbering, layout behavior, and final validation. Word and Zotero actions are
+  user-run acceptance steps unless the host explicitly provides a supported
+  desktop adapter; never assume GUI, COM, or process access.
+- Prioritize: scientific fidelity, content completeness, citation/numbering
+  semantics, editability, template structure, visual fidelity, then automation
+  cost.
+
+## Capability boundary
+
+- Required for execution: access to the project files and a viable DOCX
+  conversion path. If either is absent, provide diagnosis or a handoff plan and
+  report the conversion as blocked.
+- Optional capabilities include shell or Python execution, LaTeX compilation,
+  local application/process detection, Word rendering, GUI automation, and visual
+  inspection. Attempt one only when the host explicitly exposes it.
+- An unavailable optional capability becomes a user-run gate, not a failed
+  conversion. An unobservable capability remains `unknown`; never convert
+  `unknown` into an installation or compatibility claim.
+
+## Read routing
+
+| Situation | Required read |
 |---|---|
-| `assets/reference.docx` | Generic A4 template (copy into the project; do not edit the asset) |
-| `scripts/*.py` | Audit, style map, native cross-refs, package checks |
-| `scripts/validate_with_word.ps1` | Optional Windows COM open probe — only if the user asks |
-| `examples/minimal/` | Smoke-test manuscript |
-| `references/first-run-setup.md` | Environment, template, smoke test |
-| `references/cross-references.md` | SEQ/REF promote, numbering limits |
-| `references/ecosystem-notes.md` | Related GitHub tools (load only when extending) |
-| `requirements.txt` | `python-docx`, `lxml` |
+| New, changed, example-only, or ambiguous Word target | `references/template-distillation.md`, then `references/conversion-playbook.md#build-the-semantic-bridge` |
+| First build for a project | `examples/bridge-starter/`, then `references/conversion-playbook.md#build-the-semantic-bridge` |
+| Zotero, cross-references, equations, captions, complex objects, or diagnosis | Relevant section of `references/conversion-playbook.md` |
+| Candidate validation or handoff | `references/conversion-playbook.md#validate-and-hand-off` |
+| Other conversion work | Scan this file, then load only the relevant playbook section |
 
-## Modes (pick one)
+## Required workflow
 
-- **Zotero live:** Pandoc + official `zotero.lua` only — never `--citeproc`. User finishes in Word (prefs → Refresh → bibliography).
-- **Static CSL:** `--citeproc --bibliography --csl`.
+1. Read the user request and nearest project instructions. Identify the complete
+   LaTeX entry point, authoritative Word target, output path, and capabilities
+   exposed by the host.
+2. Compile the complete LaTeX project when the host exposes the toolchain;
+   otherwise request the user's compiled reference or record compilation as a
+   pending evidence gate. Inventory included sources, semantic roles, figures,
+   tables, equations, citations, labels, reference occurrences, appendices,
+   custom macros, and numbering behavior.
+3. If citations exist, complete the mandatory Zotero setup and probe before
+   expensive manuscript post-processing. Never use the absence of a `zotero`
+   CLI alone as evidence that Zotero is unavailable. If live fields cannot be
+   generated, stop the citation-bearing build and hand off the exact setup gate.
+4. Classify and distill every new or changed Word target into an explicit role
+   contract. Do not treat `--reference-doc` as an executable specification.
+5. For a new project, run `python scripts/init_bridge.py <build-dir>` and fill
+   `bridge_config.json` from the role contract. Keep stable field, bookmark, and
+   package operations in the copied `docx_bridge.py`; put only project-specific
+   behavior in `project_adapter.py` or the semantic Lua filter.
+6. Build the bridge `LaTeX role -> Pandoc output -> target Word representation
+   -> method`. Resolve every required role before full conversion.
+7. Convert a representative probe covering every high-risk role and transition.
+   Inspect actual styles, formatting, fields, bookmarks, lists, and objects.
+8. Correct each mismatch at its responsible layer. Start the complete conversion
+   only after the probe passes the applicable contract rows.
+9. Build the complete candidate and validate source, target-contract, and DOCX
+   evidence. Counts are diagnostic; semantic correspondence is the gate.
+10. Follow `references/conversion-playbook.md#validate-and-hand-off`. Give the user
+   a disposable candidate and exact Word/Zotero acceptance steps. If the user
+   returns the refreshed file, re-run the audit and compare pre/post evidence.
+11. Deliver the candidate, agent-side evidence, user-refresh status, adaptations,
+   unresolved items, and approved exceptions.
 
-Never combine `--citeproc` with `zotero.lua`.
+## Bundled tools
 
-## Platform
-
-| Capability | Notes |
-|---|---|
-| Agent build + package checks | Pandoc 3+, Python + `requirements.txt`, LaTeX/BibTeX — any OS |
-| Word / Zotero UI | **User** opens DOCX by default (F9, Zotero Refresh, visual check) |
-| Word COM | **Optional.** Mention it; run `validate_with_word.ps1` only if the user asks and Windows Word is available |
-| Live Zotero at build | Zotero + BBT; filter: https://retorque.re/zotero-better-bibtex/exporting/zotero.lua |
-| Local BBT API | `http://127.0.0.1:23119/better-bibtex/json-rpc` (set `NO_PROXY=*` only if proxy breaks localhost) |
-
-If setup is unknown, finish `references/first-run-setup.md` first. Detect before install; confirm with user.
-
-## Routine pipeline
-
-1. **Preflight sources**
-   - Complete entry point (all `\input`/`\include`); prefer labels `fig:` / `tab:` / `eq:`.
-   - **Figures:** Word cannot embed PDF. Change `\includegraphics` to PNG/JPEG **before** Pandoc. A same-stem `.png` next to `figure.pdf` is **not** used automatically. Treat image-conversion warnings as failures.
-   - Prefer labels on every numbered float/equation you will cross-ref. Promoter uses LaTeX counter order (unlabeled numbered objects still advance numbers).
-   - Audit keys:
-
-```text
-python scripts/check_citation_keys.py --tex main.tex --bib references.bib --skip-zotero
-python scripts/check_citation_keys.py --tex main.tex --bib references.bib
-```
-
-   Pass every file with `\cite`. PowerShell: expand globs before Python.
-
-2. **Compile LaTeX** + BibTeX; stop on errors.
-
-3. **Pandoc** on the complete entry. Set `--resource-path` to real image dirs (e.g. `.;figures`). Distinct outputs per mode.
-
-```text
-# Static
-pandoc main.tex -f latex -t docx --wrap=none --citeproc --bibliography=references.bib --csl=journal.csl --metadata reference-section-title=References --resource-path=.;figures --reference-doc=reference.docx -o out/static.docx
-
-# Zotero live (no --citeproc). Optional: --metadata zotero_csl_style=apa
-pandoc main.tex -f latex -t docx --wrap=none --lua-filter=zotero.lua --resource-path=.;figures --reference-doc=reference.docx -o out/zotero_live.docx
-```
-
-Do **not** use `pandoc-crossref` as a substitute for this skill’s native SEQ/REF promote when the goal is editable Word renumbering.
-
-4. **Styles → native cross-refs** (once per rebuild):
+Use the bundled standard-library scripts when Python 3 is available.
+`init_bridge.py` creates generated bridge files only; the manifest and audit
+scripts are read-only over source and DOCX inputs.
 
 ```text
-python scripts/format_generated_docx.py out/doc.docx
-python scripts/promote_native_crossrefs.py out/doc.docx out/doc_native.docx --tex main.tex
+python scripts/latex_manifest.py <main.tex> --output <source-manifest.json>
+python scripts/init_bridge.py <build-dir>
+python scripts/docx_audit.py <candidate.docx> \
+  --latex-manifest <source-manifest.json> \
+  --require-native-crossrefs --require-zotero-fields \
+  --output <candidate-audit.json>
+python scripts/docx_audit.py <refreshed.docx> \
+  --latex-manifest <source-manifest.json> \
+  --baseline <candidate-audit.json> \
+  --require-native-crossrefs --require-zotero-fields
 ```
 
-Default caption text: English `Fig.` / `Table` / `Eq.`.
+`--require-zotero-fields` checks generated field presence, not that Refresh has
+occurred. Scripts provide package and semantic evidence; they cannot replace
+user-run Word rendering, field refresh, Zotero refresh, or user confirmation.
 
-5. **Agent package checks** (no Word UI unless the user asked for COM):
+## Stop conditions
 
-```text
-python scripts/validate_docx.py out/doc_native.docx --tex main.tex --expect-zotero N
-python scripts/check_cross_references.py --tex main.tex --docx out/doc_native.docx --require-native-word-fields
-```
+Do not label the candidate fully verified when a required role is unmapped, a
+native field lacks a valid target, a `REF` target contains an entire drawing or
+table, the user reports a Word repair warning, live field generation is
+unverified, the user refresh/save/reopen gate is pending, or an unresolved
+scientific-content mismatch remains. A pending user gate may be delivered as a
+clearly labelled candidate; never silently downgrade it.
 
-- `N` = live citation field count; omit `--expect-zotero` for static CSL. Optional: `--expect-zotero-keys key1 key2` to require those BBT keys inside field JSON.
-- With `--tex`, source table/image counts are **enforced** against the DOCX (use `--no-enforce-tex-counts` only to diagnose). Explicit `.pdf` includes fail unless `--allow-pdf-figures`.
-- REF targets must exist as bookmarks; duplicate bookmark names fail.
-- Fails on unresolved `[@...]`. Report pass/fail; not delivery-ready until step 6.
+## Known gotchas
 
-6. **User acceptance in Word** — give the DOCX path; ask the user to:
-
-- Open (no repair dialog). If Word claims corruption on first live open, rebuild once.
-- **Live mode:** Document Preferences (set style) **OK before** bulk **Refresh**, then **Add/Edit Bibliography**.
-- Select All → **F9**.
-- Spot-check equations, figures, captions, tables, cites, bibliography, breaks vs PDF.
-
-If the **user asks** for an automated open check on Windows:
-
-```text
-powershell -File scripts/validate_with_word.ps1 -Path out/doc_native.docx
-```
-
-Do not run COM by default; do not automate Zotero clicks.
-
-## Style mapping
-
-| Content | Style |
-|---|---|
-| Prose | `Body Text` |
-| Image-only para | `Figure` |
-| Captions | `Caption` |
-| Table cells | `Table Body` |
-| Reference list | `Bibliography` |
-
-Map styles only; do not rewrite Zotero field runs. Headings: `References`, `Bibliography`, `参考文献`, `引用文献`.
-
-## Hard rules
-
-- New DOCX package only; never splice XML without relationships.
-- Canonical BBT keys; never invent keys; resolve by DOI/title.
-- Cross-file refs → full entry; audit after style postprocess.
-- Missing/PDF-only figures → fix before accepting build.
-
-## Boundaries
-
-- Live Zotero needs BBT at build; static does not.
-- Do not stack promotes; rebuild from Pandoc.
-- Equation promote needs `--tex` and matching display-math vs OMML counts.
-- Numbers come from LaTeX env order (`figure`/`table`/`equation`/…, not starred; multi-line `align` rows). Unlabeled numbered equations still advance the counter so a later labeled eq is Eq. (2). Compare complex layouts to PDF.
-- Caption promote requires Caption style or Fig./Table/图/表 prefix near the bookmark.
-- `\setcounter` may be ignored; link integrity ≠ PDF numbering.
-- Agent checks are structural; final acceptance is user-in-Word (COM only on request).
-- Bib audit is simple; complex `.bib` may need manual review.
+- Imported styles are not evidence that generated content uses them correctly.
+  See `references/template-distillation.md#build-the-role-contract`.
+- `ensuremath` can turn prose formulae and units into unwanted OMML. See
+  `references/conversion-playbook.md#preserve-text-and-math-semantics`.
+- A Pandoc bookmark can span a whole object, causing `REF` to reproduce it. See
+  `references/conversion-playbook.md#native-word-cross-references`.
+- Raw OpenXML and field construction are starter-engine responsibilities, not
+  project-adapter code. See `examples/bridge-starter/`.
+- Word/Zotero refresh can change fields and document structure. See
+  `references/conversion-playbook.md#validate-and-hand-off`.
+- Zotero Refresh updates existing Zotero fields; it cannot create fields from
+  non-Zotero citation text. See
+  `references/conversion-playbook.md#zotero-live-citations`.
+- Field update can discard caption-run formatting or expose faulty equation
+  packaging or alignment. See
+  `references/conversion-playbook.md#word-specific-objects`.
+- Equation **container** (e.g. 1×3 borderless table) is not the same as
+  **column widths**. Short template demos often use equal thirds; long OMML
+  with fractions or `\qquad` secondaries needs a wide math cell or Word
+  reflows mid-expression. Probe with a complex display equation. See
+  `references/conversion-playbook.md#numbered-equations`.
+- PDF, EPS, TikZ, and PGFPlots artwork needs explicit Word-supported output. See
+  `references/conversion-playbook.md#high-risk-objects`.

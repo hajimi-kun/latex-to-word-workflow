@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "required_roles": [
+    "__SET_ME__"
+  ],
+  "role_styles": {
+    "__SET_ME__": "__SET_ME__"
+  },
+  "style_remap": {},
+  "captions": {
+    "figure_label": "__SET_ME__",
+    "figure_separator": "__SET_ME__",
+    "table_label": "__SET_ME__",
+    "table_separator": "__SET_ME__",
+    "table_title_packaging": "__SET_ME__"
+  },
+  "equations": {
+    "container": "__SET_ME__"
+  },
+  "prose_math": {}
+}
